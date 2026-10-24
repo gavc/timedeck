@@ -45,4 +45,27 @@ public sealed class StorageTests : IDisposable
         s.Activities[1].Slot = 1; s.Settings.ReminderMinutes = 0;
         Assert.Throws<InvalidDataException>(() => Backup.Parse(JsonSerializer.Serialize(s, Backup.Json)));
     }
+    [Theory]
+    [InlineData("#2F7F6A", true)]
+    [InlineData("#ffffff", true)]
+    [InlineData("#000000", true)]
+    [InlineData("#AABBCC", true)]
+    [InlineData("2F7F6A", false)]
+    [InlineData("#2F7F6", false)]
+    [InlineData("#2F7F6AA", false)]
+    [InlineData("#GGGGGG", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void Valid_color_format_is_enforced(string? color, bool expected)
+    {
+        Assert.Equal(expected, Backup.IsValidColor(color));
+    }
+    [Fact]
+    public void ImportPreview_exposes_state_without_duplication()
+    {
+        var s = AppState.CreateDefault();
+        var preview = Backup.Parse(JsonSerializer.Serialize(s, Backup.Json));
+        Assert.NotNull(preview.State);
+        Assert.Equal(s.Activities.Count, preview.State.Activities.Count);
+    }
 }

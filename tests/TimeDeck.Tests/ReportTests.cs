@@ -3,7 +3,7 @@ using static TimeDeck.Tests.TrackerTests;
 
 namespace TimeDeck.Tests;
 
-public class ReportTests
+public sealed class ReportTests
 {
     [Fact]
     public void Editing_unchanged_fold_time_preserves_original_instant_and_fractional_seconds()
@@ -47,6 +47,20 @@ public class ReportTests
         var csv = Reports.Csv(Reports.Day(s, new(2026, 10, 23), At("11:00"), TimeZoneInfo.Utc), TimeZoneInfo.Utc);
         Assert.Contains("\"'=SUM(1,2)\"\"\"", csv);
         Assert.Equal(2, csv.Split('\n', StringSplitOptions.RemoveEmptyEntries).Length);
+    }
+    [Theory]
+    [InlineData("=SUM(1,2)", "'=SUM(1,2)")]
+    [InlineData("+12345", "'+12345")]
+    [InlineData("-cmd|' /C calc'!A0", "'-cmd|' /C calc'!A0")]
+    [InlineData("@SUM(A1:A2)", "'@SUM(A1:A2)")]
+    [InlineData("\tTabPrefix", "'\tTabPrefix")]
+    [InlineData("\rReturnPrefix", "'\rReturnPrefix")]
+    [InlineData("Normal Activity", "Normal Activity")]
+    public void Csv_protects_formula_injection_and_leaves_safe_labels(string input, string expected)
+    {
+        var row = new ReportRow(Guid.NewGuid(), null, input, At("09:00"), At("10:00"), false);
+        var csv = Reports.Csv([row], TimeZoneInfo.Utc);
+        Assert.Contains("\"" + expected.Replace("\"", "\"\"") + "\"", csv);
     }
     [Fact]
     public void Manual_entry_requires_positive_range_and_overlap_confirmation()

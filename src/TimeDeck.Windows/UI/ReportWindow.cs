@@ -89,11 +89,11 @@ internal sealed class ReportWindow : Window
         }
         var display = rows.Select(r => new DisplayRow(r.EntryId, $"{Local(r.Start)} → {(r.Live ? "now" : Local(r.End))}", r.Label, Reports.Duration(r.Duration), r.Live ? "● Running" : "Saved")).ToList();
         entries.ItemsSource = display; if (selected != null) entries.SelectedItem = display.FirstOrDefault(d => d.Id == selected);
-        DrawTimeline();
+        DrawTimeline(rows);
     }
-    private void DrawTimeline()
+    private void DrawTimeline(List<ReportRow>? rows = null)
     {
-        timeline.Children.Clear(); var rows = Rows(); var width = timeline.ActualWidth; if (width <= 0) return;
+        timeline.Children.Clear(); rows ??= Rows(); var width = timeline.ActualWidth; if (width <= 0) return;
         if (rows.Count == 0) { timeline.Children.Add(Theme.Help("Start an activity to see your day here.")); return; }
         var zone = TimeZoneInfo.Local; var lo = Reports.Instant(Day, TimeOnly.MinValue, zone); var hi = Reports.Instant(Day.AddDays(1), TimeOnly.MinValue, zone); var span = (hi - lo).TotalSeconds;
         foreach (var r in rows)

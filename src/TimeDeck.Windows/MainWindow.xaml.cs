@@ -8,8 +8,10 @@ using TimeDeck.Windows.UI;
 
 namespace TimeDeck.Windows;
 
-public partial class MainWindow : Window
+public sealed partial class MainWindow : Window
 {
+    private static readonly Thickness BorderThicknessActive = new(3);
+    private static readonly Thickness BorderThicknessNormal = new(1);
     private readonly App app;
     private bool editing;
     private Guid? dragId;
@@ -83,6 +85,7 @@ public partial class MainWindow : Window
     }
     public void Refresh()
     {
+        if (!IsVisible) return;
         var now = DateTimeOffset.UtcNow; var s = app.State; var run = s.Running;
         var day = DateOnly.FromDateTime(DateTime.Now); var rows = Reports.Day(s, day, now, TimeZoneInfo.Local);
         TodayTotal.Text = rows.Count == 0 ? "0m" : Reports.Duration(TimeSpan.FromTicks(rows.Sum(r => r.Duration.Ticks)));
@@ -91,12 +94,26 @@ public partial class MainWindow : Window
         var elapsed = run == null ? TimeSpan.Zero : now - run.Start; if (elapsed < TimeSpan.Zero) elapsed = TimeSpan.Zero;
         Elapsed.Text = run == null ? "" : $"{(int)elapsed.TotalHours:00}:{elapsed.Minutes:00}:{elapsed.Seconds:00}";
         StopButton.Visibility = run == null ? Visibility.Collapsed : Visibility.Visible;
+
+        Dictionary<Guid, long>? ticksByActivity = null;
+        if (rows.Count > 0)
+        {
+            ticksByActivity = new Dictionary<Guid, long>();
+            foreach (var r in rows)
+            {
+                if (r.ActivityId is { } actId)
+                {
+                    ticksByActivity[actId] = ticksByActivity.GetValueOrDefault(actId) + r.Duration.Ticks;
+                }
+            }
+        }
+
         foreach (var pair in tiles)
         {
             var a = s.Activities.FirstOrDefault(a => a.Slot == pair.Key); var active = a != null && run?.ActivityId == a.Id;
             pair.Value.Button.BorderBrush = Theme.Brush(active ? "#FFFFFF" : editing ? "#A8B8CA" : "#414A56");
-            pair.Value.Button.BorderThickness = new Thickness(active ? 3 : 1);
-            var ticks = a == null ? 0 : rows.Where(r => r.ActivityId == a.Id).Sum(r => r.Duration.Ticks);
+            pair.Value.Button.BorderThickness = active ? BorderThicknessActive : BorderThicknessNormal;
+            var ticks = (a != null && ticksByActivity != null && ticksByActivity.TryGetValue(a.Id, out var t)) ? t : 0;
             pair.Value.Total.Text = ticks > 0 ? Reports.Duration(TimeSpan.FromTicks(ticks)) : a == null ? "" : "—";
         }
         ReminderPanel.Visibility = run?.ReminderPending == true && s.Settings.Reminders ? Visibility.Visible : Visibility.Collapsed;
@@ -105,5 +122,5 @@ public partial class MainWindow : Window
     }
     private void Stop_Click(object sender, RoutedEventArgs e) => app.Execute(t => t.Stop(DateTimeOffset.UtcNow));
     private void StillWorking_Click(object sender, RoutedEventArgs e) => app.Execute(t => t.Acknowledge(DateTimeOffset.UtcNow));
-    private void ChangeActivity_Click(object sender, RoutedEventArgs e) { app.Execute(t => t.Acknowledge(DateTimeOffset.UtcNow, true)); editing = false; Render(); }
+    private void ChangeActivity_Click(object sender, RoutedEventArgs e) { editing = false; app.Execute(t => t.Acknowledge(DateTimeOffset.UtcNow, true)); }
 }

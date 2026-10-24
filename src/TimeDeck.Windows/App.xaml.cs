@@ -12,13 +12,15 @@ using Forms = System.Windows.Forms;
 
 namespace TimeDeck.Windows;
 
-public partial class App : System.Windows.Application
+public sealed partial class App : System.Windows.Application
 {
     private Mutex? instance;
     private bool ownsMutex;
     private readonly CancellationTokenSource stopping = new();
     private DispatcherTimer? clock;
     private Forms.NotifyIcon? tray;
+    private string lastTrayText = "";
+    private bool? lastTrayEnabled;
     private MainWindow? deck;
     private StateStore store = null!;
     private Tracker tracker = null!;
@@ -71,7 +73,7 @@ public partial class App : System.Windows.Application
                 await Dispatcher.InvokeAsync(ShowDeck);
             }
             catch (OperationCanceledException) { break; }
-            catch (IOException) { await Task.Delay(250); }
+            catch (IOException) { await Task.Delay(250, stopping.Token); }
         }
     }
     public void ShowDeck()
@@ -92,9 +94,19 @@ public partial class App : System.Windows.Application
     private void UpdateTray()
     {
         if (tray == null) return;
+        var isRunning = State.Running != null;
         var text = State.Running is { } run ? "Time Deck · " + run.Label : "Time Deck · Not tracking";
-        tray.Text = text.Length > 63 ? text[..60] + "…" : text;
-        if (tray.ContextMenuStrip != null) tray.ContextMenuStrip.Items[1].Enabled = State.Running != null;
+        var formatted = text.Length > 63 ? text[..60] + "…" : text;
+        if (formatted != lastTrayText)
+        {
+            tray.Text = formatted;
+            lastTrayText = formatted;
+        }
+        if (tray.ContextMenuStrip != null && lastTrayEnabled != isRunning)
+        {
+            tray.ContextMenuStrip.Items[1].Enabled = isRunning;
+            lastTrayEnabled = isRunning;
+        }
     }
     public bool Execute(Action<Tracker> change, bool showErrors = true)
     {

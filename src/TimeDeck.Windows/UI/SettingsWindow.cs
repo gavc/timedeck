@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -29,7 +30,7 @@ internal static class SettingsWindow
         var error = Theme.Text("", 12, "#A9413C"); body.Children.Add(error);
         body.Children.Add(Theme.Row(Theme.Button("Save settings", () =>
         {
-            if (!TimeOnly.TryParse(start.Text, out var from) || !TimeOnly.TryParse(end.Text, out var to) || !int.TryParse(minutes.Text, out var interval)) { error.Text = "Enter valid times (such as 06:00) and a whole number of minutes."; return; }
+            if (!TimeOnly.TryParse(start.Text, CultureInfo.CurrentCulture, out var from) || !TimeOnly.TryParse(end.Text, CultureInfo.CurrentCulture, out var to) || !int.TryParse(minutes.Text, CultureInfo.CurrentCulture, out var interval)) { error.Text = "Enter valid times (such as 06:00) and a whole number of minutes."; return; }
             var next = new Settings { WorkStart = from, WorkEnd = to, AutoStop = auto.IsChecked == true, Reminders = remind.IsChecked == true, ReminderMinutes = interval, StartWithWindows = startup.IsChecked == true, TrayExplained = app.State.Settings.TrayExplained };
             var oldStartup = app.State.Settings.StartWithWindows;
             try

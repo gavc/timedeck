@@ -35,21 +35,64 @@ public static class Reports
     }
     public static List<ReportRow> Day(AppState state, DateOnly date, DateTimeOffset now, TimeZoneInfo zone)
     {
-        var lo = Instant(date, TimeOnly.MinValue, zone); var hi = Instant(date.AddDays(1), TimeOnly.MinValue, zone);
-        var rows = state.Entries.Select(e => new ReportRow(e.Id, e.ActivityId, state.Activities.FirstOrDefault(a => a.Id == e.ActivityId)?.Name ?? e.Label, e.Start, e.End, false)).ToList();
+        var lo = Instant(date, TimeOnly.MinValue, zone);
+        var hi = Instant(date.AddDays(1), TimeOnly.MinValue, zone);
+        var rows = new List<ReportRow>();
+
+        foreach (var e in state.Entries)
+        {
+            if (e.Start < hi && e.End > lo)
+            {
+                var start = e.Start < lo ? lo : e.Start;
+                var end = e.End > hi ? hi : e.End;
+                if (end > start)
+                {
+                    var label = state.Activities.FirstOrDefault(a => a.Id == e.ActivityId)?.Name ?? e.Label;
+                    rows.Add(new ReportRow(e.Id, e.ActivityId, label, start, end, false));
+                }
+            }
+        }
+
         if (state.Running is { } run)
-            rows.Add(new(null, run.ActivityId, run.Label, run.Start, run.Cutoff is { } end && now > end ? end : now, true));
-        return rows.Where(r => r.Start < hi && r.End > lo).Select(r => r with { Start = r.Start < lo ? lo : r.Start, End = r.End > hi ? hi : r.End }).Where(r => r.End > r.Start).OrderBy(r => r.Start).ToList();
+        {
+            var runEnd = run.Cutoff is { } cutoff && now > cutoff ? cutoff : now;
+            if (run.Start < hi && runEnd > lo)
+            {
+                var start = run.Start < lo ? lo : run.Start;
+                var end = runEnd > hi ? hi : runEnd;
+                if (end > start)
+                {
+                    rows.Add(new ReportRow(null, run.ActivityId, run.Label, start, end, true));
+                }
+            }
+        }
+
+        rows.Sort((a, b) => a.Start.CompareTo(b.Start));
+        return rows;
     }
     public static string Csv(IEnumerable<ReportRow> rows, TimeZoneInfo zone)
     {
         var text = new StringBuilder("Date,Start,End,Activity,Minutes\r\n");
         foreach (var r in rows.Where(r => !r.Live))
         {
-            var start = TimeZoneInfo.ConvertTime(r.Start, zone); var end = TimeZoneInfo.ConvertTime(r.End, zone);
+            var start = TimeZoneInfo.ConvertTime(r.Start, zone);
+            var end = TimeZoneInfo.ConvertTime(r.End, zone);
             var label = r.Label;
-            if (label.TrimStart().StartsWith('=') || label.TrimStart().StartsWith('+') || label.TrimStart().StartsWith('-') || label.TrimStart().StartsWith('@') || label.StartsWith('\t') || label.StartsWith('\r')) label = "'" + label;
-            text.AppendLine(string.Join(',', start.ToString("yyyy-MM-dd"), start.ToString("HH:mm:sszzz"), end.ToString("HH:mm:sszzz"), "\"" + label.Replace("\"", "\"\"") + "\"", r.Duration.TotalMinutes.ToString("0.####", CultureInfo.InvariantCulture)));
+            var trimmed = label.AsSpan().TrimStart();
+            if ((!trimmed.IsEmpty && (trimmed[0] is '=' or '+' or '-' or '@')) || label.StartsWith('\t') || label.StartsWith('\r'))
+            {
+                label = "'" + label;
+            }
+            text.Append(start.ToString("yyyy-MM-dd"))
+                .Append(',')
+                .Append(start.ToString("HH:mm:sszzz"))
+                .Append(',')
+                .Append(end.ToString("HH:mm:sszzz"))
+                .Append(",\"")
+                .Append(label.Replace("\"", "\"\""))
+                .Append("\",")
+                .Append(r.Duration.TotalMinutes.ToString("0.####", CultureInfo.InvariantCulture))
+                .AppendLine();
         }
         return text.ToString();
     }

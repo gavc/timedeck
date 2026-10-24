@@ -29,19 +29,19 @@ public sealed class StateStore(string directory)
     private static AppState Read(string path)
     {
         var text = File.ReadAllText(path);
-        var preview = Backup.Parse(text);
-        return preview.SelectActivities(preview.Activities.Select(a => a.Id));
+        return Backup.Parse(text).State;
     }
     public void Save(AppState state)
     {
-        Backup.Validate(state); Directory.CreateDirectory(DirectoryPath);
+        Backup.Validate(state);
+        Directory.CreateDirectory(DirectoryPath);
         var temporary = Path.Combine(DirectoryPath, "state." + Guid.NewGuid().ToString("N") + ".tmp");
         try
         {
             using (var file = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
             {
-                var bytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(state, Backup.Json));
-                file.Write(bytes); file.Flush(true);
+                JsonSerializer.Serialize(file, state, Backup.Json);
+                file.Flush(true);
             }
             if (File.Exists(Primary)) File.Replace(temporary, Primary, Previous, true);
             else File.Move(temporary, Primary);

@@ -28,8 +28,8 @@ internal static class EntryDialog
         body.Children.Add(startFold); body.Children.Add(endFold);
         void UpdateFoldControls()
         {
-            startFold.Visibility = startDate.SelectedDate is { } sd && TimeOnly.TryParse(startTime.Text, out var st) && TimeZoneInfo.Local.IsAmbiguousTime(sd.Date + st.ToTimeSpan()) ? Visibility.Visible : Visibility.Collapsed;
-            endFold.Visibility = endDate.SelectedDate is { } ed && TimeOnly.TryParse(endTime.Text, out var et) && TimeZoneInfo.Local.IsAmbiguousTime(ed.Date + et.ToTimeSpan()) ? Visibility.Visible : Visibility.Collapsed;
+            startFold.Visibility = startDate.SelectedDate is { } sd && TimeOnly.TryParse(startTime.Text, CultureInfo.CurrentCulture, out var st) && TimeZoneInfo.Local.IsAmbiguousTime(sd.Date + st.ToTimeSpan()) ? Visibility.Visible : Visibility.Collapsed;
+            endFold.Visibility = endDate.SelectedDate is { } ed && TimeOnly.TryParse(endTime.Text, CultureInfo.CurrentCulture, out var et) && TimeZoneInfo.Local.IsAmbiguousTime(ed.Date + et.ToTimeSpan()) ? Visibility.Visible : Visibility.Collapsed;
         }
         startDate.SelectedDateChanged += (_, _) => UpdateFoldControls(); endDate.SelectedDateChanged += (_, _) => UpdateFoldControls();
         startTime.TextChanged += (_, _) => UpdateFoldControls(); endTime.TextChanged += (_, _) => UpdateFoldControls(); UpdateFoldControls();

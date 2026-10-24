@@ -49,3 +49,11 @@ A separate read-only reviewer checked the implementation. Fixed the substantive 
 The original HTML remains functionally unchanged. The Windows app starts fresh, as requested; browser migration was removed from scope.
 
 Final published-build smoke run: **15 checks passed**. Full solution verification, `dotnet test TimeDeck.slnx --no-restore`: **20 tests passed**. The original HTML file remains 33,188 bytes.
+
+## Installer verification — 24 October 2026
+
+Built `installer/TimeDeck.iss` using the installed Inno Setup 6.6.1 compiler after publishing the self-contained app. Output: `artifacts/installer/TimeDeck-Setup-1.0.0-win-x64.exe` (59.1 MB).
+
+Installed silently into a unique test directory under `artifacts/`, verified the registered app name/version and hashes of the installed executable, app assemblies, .NET runtime and notification resource, then uninstalled. The app files and uninstall registration were removed, and the normal tracking data was unchanged. The installer's embedded icon matches the app's extracted icon pixel for pixel. The first metadata assertion expected an unversioned display name; it was corrected to accept Inno Setup's default `Time Deck version 1.0.0`, and the checks were rerun successfully.
+
+The installer is unsigned. The interactive wizard, upgrades over an older installed release, and installation on a separate clean Windows machine have not yet been tested.

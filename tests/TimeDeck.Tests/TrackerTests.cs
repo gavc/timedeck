@@ -2,7 +2,7 @@ using TimeDeck.Core;
 
 namespace TimeDeck.Tests;
 
-public class TrackerTests
+public sealed class TrackerTests
 {
     internal static DateTimeOffset At(string time) => DateTimeOffset.Parse("2026-10-23T" + time + "+00:00");
     internal static (AppState, Tracker) Make()

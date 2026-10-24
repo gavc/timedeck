@@ -31,6 +31,20 @@ On first launch, the Windows app creates a fresh data file and a default deck wi
 
 The original [`time-tracker.html`](time-tracker.html) is a separate browser app: open that file in a browser to use it. The Windows app does not import its data.
 
+## Windows installer
+
+To build the installer, install Inno Setup 6.3 or later alongside the .NET 10 SDK, then run:
+
+```powershell
+.\scripts\build-installer.ps1
+```
+
+The script publishes the self-contained app and compiles [`installer/TimeDeck.iss`](installer/TimeDeck.iss). It reads the version from the Windows project; version 1.0.0 produces `artifacts/installer/TimeDeck-Setup-1.0.0-win-x64.exe`. If Inno Setup is installed in a custom location, pass `-CompilerPath 'C:\path\to\ISCC.exe'`.
+
+The installer uses the Time Deck icon and installs for the current user under `%LOCALAPPDATA%\Programs\TimeDeck`, without an administrator prompt. It adds a Start menu shortcut, offers an optional desktop shortcut, and registers an uninstaller in Windows Settings. Uninstalling keeps your tracking data and backups. The optional **Start with Windows** setting remains controlled by the app.
+
+Before installing an update or uninstalling, choose **Exit** from the Time Deck tray menu so the timer is stopped and saved. Closing its window only hides it in the tray. Build output stays under the ignored `artifacts/` directory; the installer can be attached to a GitHub release separately. Locally built installers are unsigned.
+
 ## Use
 
 - Click an activity to start. Click it again to stop, or another activity to switch immediately.

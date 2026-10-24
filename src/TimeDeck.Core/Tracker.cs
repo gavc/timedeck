@@ -98,7 +98,7 @@ public sealed class Tracker(AppState state, TimeZoneInfo zone)
         name = name.Trim();
         if (string.IsNullOrWhiteSpace(name) || name.Length > 80) throw new ArgumentException("Enter a unique activity name (1–80 characters).");
         if (State.Activities.Any(a => a.Id != id && string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase))) throw new ArgumentException("An activity already has this name.");
-        if (!System.Text.RegularExpressions.Regex.IsMatch(color, "^#[0-9a-fA-F]{6}$")) throw new ArgumentException("Use a colour such as #2F7F6A.");
+        if (!Backup.IsValidColor(color)) throw new ArgumentException("Use a colour such as #2F7F6A.");
         if (slot is < 0 or >= 29) throw new ArgumentException("Choose a slot between 1 and 29.");
         var a = id.HasValue ? State.Activities.Single(a => a.Id == id) : new Activity { Slot = slot };
         if (!id.HasValue)
