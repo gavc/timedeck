@@ -1,0 +1,39 @@
+# Build and publish output
+**/bin/
+**/obj/
+/artifacts/
+
+# IDE and machine-specific files
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Test and coverage output
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
+coverage.opencover.xml
+
+# Local environment and temporary files
+.env
+.env.*
+!.env.example
+!.env.sample
+*.log
+*.tmp
+
+# Time Deck data and exported backups/reports
+state.json
+state.backup.json
+state.corrupt-*.json
+before-restore-*.json
+time-deck-*.json
+time-deck-*.csv

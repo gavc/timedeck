@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TimeDeck.Core/TimeDeck.Core.csproj" />
+    <Project Path="src/TimeDeck.Windows/TimeDeck.Windows.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TimeDeck.Tests/TimeDeck.Tests.csproj" />
+  </Folder>
+</Solution>

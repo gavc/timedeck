@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Time Deck</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--tx:#1d1d1b;--mut:#6b6a64;--line:#e3e1d8;--acc:#1f5f4a;--accTx:#fff;--red:#b3402f;--deck:#26262a;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121213;--card:#1d1d1f;--tx:#eeede6;--mut:#9a988e;--line:#333;--acc:#5fbf9f;--accTx:#10201a;--red:#e07a67;--deck:#0b0b0c;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121213;--card:#1d1d1f;--tx:#eeede6;--mut:#9a988e;--line:#333;--acc:#5fbf9f;--accTx:#10201a;--red:#e07a67;--deck:#0b0b0c;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:820px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
+input[type=text],input[type=date],select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.row>*{flex:1 1 130px}.row>.sm{flex:0 0 auto}
+button{font:inherit;padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--tx);cursor:pointer}
+button.pri{background:var(--acc);color:var(--accTx);border-color:var(--acc);font-weight:600}
+button.stop{background:var(--red);border-color:var(--red);color:#fff;font-weight:600}
+.deckwrap{background:var(--deck);border-radius:18px;padding:14px;margin-bottom:14px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.status{display:flex;align-items:center;gap:12px;color:#ddd;margin-bottom:12px;min-height:44px}
+.status .now{flex:1;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status .clk{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;color:#fff}
+.status button{background:#3a3a40;border-color:#4a4a52;color:#fff;padding:7px 12px}
+.status button.stop{background:var(--red)}
+.deck{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.deck>section{grid-column:1/-1;min-width:0}
+.deck h2{color:#bbb;margin:6px 0 10px}
+.deckgroup{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.tile{position:relative;aspect-ratio:1;border:none;border-radius:16px;background:var(--c);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.25);transition:transform .08s,opacity .15s}
+.deck.run .tile:not(.on){opacity:.55}
+.deck .tile:hover{opacity:1}
+.tile:active{transform:scale(.94)}
+.tile .ic{font-size:34px;line-height:1}
+.tile .lb{font-size:12px;font-weight:600;text-align:center;line-height:1.15;overflow:hidden;max-width:100%}
+.tile .k{position:absolute;top:6px;left:9px;font-size:11px;opacity:.6}
+.tile .el{position:absolute;bottom:6px;font-size:11px;font-variant-numeric:tabular-nums;background:rgba(0,0,0,.35);border-radius:99px;padding:0 7px}
+.tile.on{outline:3px solid #fff;outline-offset:2px;animation:glow 2s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:0 0 18px var(--c),inset 0 -4px 0 rgba(0,0,0,.22)}}
+.tile.edit{outline:2px dashed rgba(255,255,255,.5);outline-offset:2px}
+.tile.sel{outline:3px solid #fff}
+.tile.add{background:#34343a;color:#aaa}
+.dfoot{display:flex;justify-content:space-between;margin-top:10px}
+.ov{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:50;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.ov[hidden]{display:none}
+.ovin{max-width:820px;margin:0 auto;padding:16px}
+.ovhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.ovhead h1{margin:0;font-size:20px}
+.sl{font-size:12px;color:var(--mut);margin-bottom:6px}
+.sug{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.sug button{padding:4px 10px;font-size:13px;border-radius:99px}
+.dfoot button{background:none;border:none;color:#888;font-size:13px;text-decoration:underline;padding:4px}
+.editor{margin-top:12px;background:var(--card);border-radius:12px;padding:12px}
+.emo,.sw{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.emo button{padding:3px 6px;font-size:20px;background:none;border-color:transparent}
+.emo button.on{border-color:var(--acc);background:var(--bg)}
+button:disabled{opacity:.4;cursor:default}
+.help{font-size:12px;color:var(--mut);margin:0 0 10px}
+.sw button{width:26px;height:26px;padding:0;border-radius:50%;border:2px solid transparent}
+.sw button.on{border-color:var(--tx)}
+.nav{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.nav input{width:auto}
+.stats{display:flex;gap:22px;flex-wrap:wrap;margin-top:12px}
+.stats div{font-size:12px;color:var(--mut)}
+.stats b{display:block;font-size:20px;color:var(--tx);font-variant-numeric:tabular-nums}
+.tl{position:relative;height:56px;background:var(--bg);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.blk{position:absolute;top:4px;bottom:4px;border-radius:4px;color:#fff;font-size:12px;padding:3px 5px;overflow:hidden;white-space:nowrap;min-width:3px}
+.blk.live{animation:p 1.6s ease-in-out infinite}
+@keyframes p{50%{opacity:.6}}
+.ticks{position:relative;height:18px;margin-top:3px;font-size:11px;color:var(--mut)}
+.ticks span{position:absolute;transform:translateX(-50%)}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.bar .nm{flex:0 0 130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar .tr{flex:1;height:14px;background:var(--bg);border-radius:7px;overflow:hidden;display:flex}
+.bar .tr i{display:block;height:100%}
+.bar .v{flex:0 0 92px;text-align:right;color:var(--mut);font-variant-numeric:tabular-nums}
+.wk{cursor:pointer}.wk.today .nm{font-weight:700}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:420px}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.x{padding:2px 8px;color:var(--mut)}
+.empty{color:var(--mut);padding:8px 0}
+.reminder{position:fixed;bottom:16px;left:16px;right:16px;max-width:788px;margin:auto;z-index:60;background:var(--card);border:2px solid var(--acc);border-radius:12px;padding:16px;box-shadow:0 6px 24px rgba(0,0,0,.3);max-height:80vh;overflow:auto}
+.reminder[hidden]{display:none}
+.reminder p{margin:0 0 12px;overflow-wrap:anywhere}
+.reminder .row{margin:0}
+.reminder-settings summary{cursor:pointer}
+.reminder-settings label{display:block;margin:12px 0}
+.reminder-settings p{margin:10px 0 0}
+</style>
+</head>
+<body>
+<main>
+<div class="deckwrap">
+  <div class="status">
+    <div class="now" id="now">Press a button to start tracking</div>
+    <div class="clk" id="clk"></div>
+    <button class="stop" id="stopBtn" style="display:none">Stop</button>
+  </div>
+  <div class="deck" id="deck"></div>
+  <div class="editor" id="editor" style="display:none"></div>
+  <div class="dfoot"><button id="repBtn">📊 Report</button><button id="editBtn">Edit buttons</button></div>
+</div>
+
+<details class="card reminder-settings">
+  <summary>Activity reminders</summary>
+  <label><input type="checkbox" id="remindersEnabled" checked> Remind me after 1 hour on the same activity</label>
+  <p class="help">If you don't respond, reminders repeat every 15 minutes. "Still working" starts a new 1-hour reminder period without resetting your timer. "Change activity" lets you choose another button; if you don't switch, you'll be reminded again in 15 minutes.</p>
+  <button id="enableNotifications">Enable desktop notifications</button>
+  <p class="help" id="notificationStatus" role="status"></p>
+  <p class="help">Keep this page open for reminders. Sleeping devices or suspended tabs may delay them until the page resumes. Desktop notifications depend on browser permission and system settings; opening this file directly may restrict them. In-app reminders still work. No reminder sound is requested.</p>
+</details>
+
+<div class="ov" id="report" hidden><div class="ovin">
+<div class="ovhead"><h1>Report</h1><button id="closeRep" class="pri sm">Close</button></div>
+<div class="card">
+  <div class="nav">
+    <div class="row" style="margin:0;flex:0 0 auto">
+      <button id="prev" class="sm">&larr;</button>
+      <input type="date" id="day">
+      <button id="next" class="sm">&rarr;</button>
+      <button id="today" class="sm">Today</button>
+    </div>
+    <button id="copy" class="sm">Copy day as CSV</button>
+  </div>
+  <div class="stats" id="stats"></div>
+</div>
+
+<div class="card"><h2>Your day</h2><div class="tl" id="tl"></div><div class="ticks" id="ticks"></div></div>
+<div class="card"><h2>Where the time went</h2><div id="by"></div></div>
+<div class="card"><h2>This week</h2><div id="wk"></div></div>
+
+<div class="card">
+  <h2>Entries</h2>
+  <div class="scroll"><table><tbody id="rows"></tbody></table></div>
+  <details style="margin-top:12px"><summary style="cursor:pointer;color:var(--mut)">Add time manually</summary>
+    <div class="row" style="margin-top:10px">
+      <input type="text" id="mDesc" list="names" placeholder="Button name or anything" style="flex:2 1 180px">
+      <input type="text" id="mStart" placeholder="Start (9:30 am)" style="flex:1 1 110px">
+      <input type="text" id="mDur" placeholder="Length (45m, 1:30)" style="flex:1 1 110px">
+      <button id="addBtn" class="sm">Add</button>
+    </div>
+    <datalist id="names"></datalist>
+    <div id="err" style="color:var(--red);font-size:13px"></div>
+    <div class="empty" style="font-size:12px">Leave start blank and it's placed right after your previous entry.</div>
+  </details>
+</div>
+</div></div>
+</main>
+<aside class="reminder" id="reminder" aria-label="Activity check-in" hidden>
+  <p id="reminderMessage" role="alert"></p>
+  <div class="row">
+    <button class="pri" id="stillWorking">Still working (remind in 1 hour)</button>
+    <button id="changeActivity">Change activity</button>
+    <button id="reminderStop">Stop tracking</button>
+  </div>
+</aside>
+
+<script>
+(function(){
+var K='tt.entries.v1',TK='tt.timer.v1',PK='tt.presets.v3',RK='tt.reminders.v1';
+var REMINDER_AFTER=3600000,REMINDER_REPEAT=900000;
+var remindersEnabled=load(RK,true)!==false,desktopNotification=null,notificationError='';
+var PAL=['#2f7f6a','#c7772b','#4a6fb5','#b5486a','#8a6bbd','#b08f1f','#3f8f9c','#6f7f2f','#d1584a','#5a6b7b'];
+var EMO=[
+  ['Work & communication',[['👥','People'],['✉️','Email'],['🗓️','Calendar'],['💬','Chat'],['📞','Phone'],['🤝','Handshake'],['📝','Notes'],['📋','Clipboard'],['📊','Chart'],['🧾','Receipt'],['💼','Briefcase'],['🗂️','Projects'],['🎯','Focus'],['💡','Idea'],['⏰','Alarm'],['✅','Complete']]],
+  ['IT & equipment',[['💻','Laptop'],['🖥️','Desktop'],['🎫','Ticket'],['🔧','Wrench'],['🛠️','Tools'],['⚙️','Settings'],['🖨️','Printer'],['📽️','Projector'],['📹','Video camera'],['🎧','Headphones'],['🎤','Microphone'],['🌐','Network'],['📦','Package'],['🔑','Key'],['🔐','Access'],['🛡️','Security'],['🔌','Power'],['💾','Save']]],
+  ['Learning & people',[['📚','Books'],['🎓','Training'],['🧑‍💼','Onboarding'],['🏫','School'],['🔍','Research'],['🧪','Testing'],['🧠','Thinking'],['🙋','Help']]],
+  ['Breaks & wellbeing',[['☕','Coffee'],['🫖','Tea'],['🍽️','Meal'],['🥪','Sandwich'],['🍎','Apple'],['💧','Water'],['🧘','Relax'],['🚶','Walk'],['🏃','Run'],['🌿','Nature'],['☀️','Sun'],['🎵','Music']]],
+  ['Travel & everyday',[['🚗','Car'],['🚌','Bus'],['🚆','Train'],['🚲','Bicycle'],['✈️','Flight'],['🏠','Home'],['🏢','Office'],['🛒','Shopping'],['🧹','Cleaning'],['📍','Location']]],
+  ['Symbols',[['⭐','Star'],['🏷️','Label'],['⬆️','Escalation'],['➡️','Next'],['➕','Plus'],['✔️','Tick'],['⚠️','Warning'],['❓','Question'],['❤️','Heart'],['🔄','Repeat'],['🚀','Launch'],['🏆','Achievement']]]
+];
+var CATS=['Work','IT Support','Breaks','Other'];
+var DEF=[['HR','👥'],['Email','✉️'],['Meeting','🗓️'],['One on One','💬'],['Focus Work','🎯'],['Morning Tea','☕'],['Lunch','🍽️'],['Break','🧘']];
+function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function save(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function del(k){try{localStorage.removeItem(k)}catch(e){}}
+function $(i){return document.getElementById(i)}
+function pad(n){return String(n).padStart(2,'0')}
+function dkey(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function today(){return dkey(new Date())}
+function dstart(k){var p=k.split('-');return new Date(+p[0],+p[1]-1,+p[2]).getTime()}
+function shift(k,n){var p=k.split('-');return dkey(new Date(+p[0],+p[1]-1,+p[2]+n))}
+function esc(t){return String(t).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function hms(s){s=Math.max(0,Math.floor(s));return Math.floor(s/3600)+':'+pad(Math.floor(s%3600/60))+':'+pad(s%60)}
+function dur(s){var m=Math.round(s/60);if(s<30)return '<1m';return m<60?m+'m':Math.floor(m/60)+'h '+pad(m%60)+'m'}
+function ct(ms){return new Date(ms).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}
+
+var entries=load(K,[]).map(function(e){return{id:e.id,date:e.date,start:e.start||null,secs:e.secs,label:e.label||e.desc||e.client||'(untitled)'}});
+var timer=load(TK,null);
+if(timer)timer={start:timer.start,label:timer.label||timer.desc||timer.client||'',nextReminder:Number.isFinite(timer.nextReminder)?timer.nextReminder:timer.start+REMINDER_AFTER,reminderPending:timer.reminderPending===true};
+var presets=load(PK,null);
+if(!presets){
+  var old=load('tt.presets.v2',null);
+  presets=DEF.map(function(d,i){return{name:d[0],icon:d[1],color:PAL[i%PAL.length]}});
+  if(old)old.forEach(function(o){if(!presets.some(function(p){return p.name===o.name}))presets.push({name:o.name,icon:'🏷️',color:o.color||PAL[0]})});
+}
+var NEWB=[['FreshService','🎫'],['AV','📽️'],['Printing','🖨️'],['VC','📹'],['Licensing','🔑']];
+if(!load('tt.seed.v4',false)){
+  NEWB.forEach(function(d){if(!presets.some(function(p){return p.name===d[0]}))presets.push({name:d[0],icon:d[1],color:PAL[presets.length%PAL.length]})});
+  save(PK,presets);save('tt.seed.v4',true);
+}
+var SUG=[['Accounts & Access','🔐'],['Hardware','💻'],['Network','🌐'],['Software Install','📦'],['Escalations','⬆️'],['Knowledge Base','📚'],['Patching','🛠️'],['Onboarding','🧑‍💼'],['Phone Calls','📞'],['Projects','🗂️'],['Remote Support','🖥️'],['Training','🎓']];
+function defaultCategory(name){
+  if(['Morning Tea','Lunch','Break'].indexOf(name)>=0)return 'Breaks';
+  if(NEWB.concat(SUG).some(function(d){return d[0]===name}))return 'IT Support';
+  if(DEF.some(function(d){return d[0]===name}))return 'Work';
+  return 'Other';
+}
+presets.forEach(function(p){if(CATS.indexOf(p.category)<0)p.category=defaultCategory(p.name)});
+save(PK,presets);
+var cur=today(),editing=false,sel=null,draft=null,tk=0;
+
+function pFor(l){for(var i=0;i<presets.length;i++)if(presets[i].name===l)return presets[i];return null}
+function colorFor(l){var p=pFor(l);if(p)return p.color;var h=0;for(var j=0;j<l.length;j++)h=(h*31+l.charCodeAt(j))>>>0;return PAL[h%PAL.length]}
+function iconFor(l){var p=pFor(l);return p?p.icon+' ':''}
+function addEntry(e){e.id=Date.now().toString(36)+Math.random().toString(36).slice(2,5);entries.push(e);save(K,entries)}
+
+function placed(k){
+  var ds=dstart(k),end=ds+864e5,out=[],noS=[];
+  entries.forEach(function(e){if(e.date!==k)return;if(e.start)out.push({e:e,s:e.start,t:Math.min(end,e.start+e.secs*1000),label:e.label});else noS.push(e)});
+  out.sort(function(a,b){return a.s-b.s});
+  var c=out.length?out[out.length-1].t:ds+9*36e5;
+  noS.forEach(function(e){out.push({e:e,s:c,t:c+e.secs*1000,label:e.label});c+=e.secs*1000});
+  if(timer&&dkey(new Date(timer.start))===k)out.push({e:null,s:timer.start,t:Math.min(end,Date.now()),label:timer.label||'(untitled)',live:true});
+  return out;
+}
+
+/* ---- timer actions ---- */
+function clearReminder(){
+  $('reminder').hidden=true;
+  if(desktopNotification){desktopNotification.close();desktopNotification=null}
+}
+function notificationStatus(){
+  var supported='Notification' in window,permission=supported?Notification.permission:'unavailable';
+  $('enableNotifications').disabled=!supported||permission==='granted'||permission==='denied';
+  $('enableNotifications').textContent=permission==='granted'?'Desktop notifications enabled':'Enable desktop notifications';
+  $('notificationStatus').textContent=notificationError||(permission==='granted'?'Desktop notifications are allowed.':permission==='denied'?'Desktop notifications are blocked. Allow them in your browser settings; in-app reminders remain available.':permission==='unavailable'?'Desktop notifications are unavailable in this browser. In-app reminders remain available.':'Desktop notifications need your permission. In-app reminders are already available.');
+}
+function checkReminder(){
+  if(!timer||!remindersEnabled){clearReminder();return}
+  var now=Date.now(),due=now>=timer.nextReminder;
+  if(!due&&!timer.reminderPending)return;
+  var message='You have been tracking "'+(timer.label||'Working')+'" for '+dur((now-timer.start)/1000)+'. Are you still working on this?';
+  if($('reminderMessage').textContent!==message)$('reminderMessage').textContent=message;
+  $('reminder').hidden=false;
+  if(!due)return;
+  timer.reminderPending=true;timer.nextReminder=now+REMINDER_REPEAT;save(TK,timer);
+  if('Notification' in window&&Notification.permission==='granted'){
+    try{
+      if(desktopNotification)desktopNotification.close();
+      desktopNotification=new Notification('Still working on this?',{body:message,tag:'time-deck-activity-reminder',silent:true});
+      desktopNotification.onclick=function(){window.focus();$('stillWorking').focus()};
+      desktopNotification.onerror=function(){notificationError='Desktop notification could not be delivered. Please check browser and system notification settings. The in-app reminder is still available.';notificationStatus()};
+    }catch(e){
+      console.warn('Activity desktop notification failed',e);
+      notificationError='Desktop notification could not be created in this browser. The in-app reminder is still available.';notificationStatus();
+    }
+  }
+}
+$('remindersEnabled').checked=remindersEnabled;
+$('remindersEnabled').onchange=function(){
+  remindersEnabled=this.checked;
+  try{localStorage.setItem(RK,JSON.stringify(remindersEnabled))}catch(e){console.warn('Could not save reminder preference',e);notificationError='Could not save your reminder preference. It will apply only while this page stays open.'}
+  notificationStatus();checkReminder();
+};
+$('enableNotifications').onclick=async function(){
+  notificationError='';
+  try{
+    var permission=await Notification.requestPermission();
+    if(permission==='default')notificationError='Permission was not granted. Click Enable desktop notifications to try again; in-app reminders remain available.';
+  }catch(e){console.warn('Desktop notification permission failed',e);notificationError='This browser could not enable desktop notifications. Try opening the app on localhost or HTTPS. In-app reminders remain available.'}
+  notificationStatus();
+};
+$('stillWorking').onclick=function(){
+  if(timer){timer.reminderPending=false;timer.nextReminder=Date.now()+REMINDER_AFTER;save(TK,timer)}
+  clearReminder();
+};
+$('changeActivity').onclick=function(){
+  if(timer){timer.reminderPending=false;timer.nextReminder=Date.now()+REMINDER_REPEAT;save(TK,timer)}
+  clearReminder();
+  closeRep();editing=false;sel=null;renderDeck();
+  $('deck').scrollIntoView({block:'start'});
+  var tile=document.querySelector('.tile:not(.on)');if(tile)tile.focus();
+};
+$('reminderStop').onclick=function(){stopTimer();renderDeck();render();tick()};
+notificationStatus();
+function stopTimer(){
+  if(!timer)return;
+  var secs=Math.round((Date.now()-timer.start)/1000);
+  if(secs>=5)addEntry({date:dkey(new Date(timer.start)),start:timer.start,secs:secs,label:timer.label||'(untitled)'});
+  timer=null;del(TK);clearReminder();
+}
+function press(i){
+  var name=presets[i].name;
+  if(timer&&timer.label===name){stopTimer()}
+  else{stopTimer();var now=Date.now();timer={start:now,label:name,nextReminder:now+REMINDER_AFTER,reminderPending:false};save(TK,timer)}
+  cur=today();renderDeck();render();tick();
+}
+
+/* ---- deck ---- */
+function neighbor(i,step){
+  for(var j=i+step;j>=0&&j<presets.length;j+=step)if(presets[j].category===presets[i].category)return j;
+  return -1;
+}
+function renderDeck(){
+  var run=!!timer;
+  $('deck').className='deck'+(run?' run':'');
+  $('deck').innerHTML=CATS.map(function(category){
+    var tiles=presets.map(function(p,i){
+    if(p.category!==category)return '';
+    var on=run&&timer.label===p.name;
+    return '<button class="tile'+(on?' on':'')+(editing?' edit':'')+(sel===i?' sel':'')+'" data-i="'+i+'" style="--c:'+p.color+'"><span class="k">'+(i<9?i+1:'')+'</span><span class="ic">'+esc(p.icon)+'</span><span class="lb">'+esc(p.name)+'</span>'+(on?'<span class="el">0:00:00</span>':'')+'</button>';
+    }).join('');
+    return tiles?'<section aria-label="'+category+'"><h2>'+category+'</h2><div class="deckgroup">'+tiles+'</div></section>':'';
+  }).join('')+(editing?'<button class="tile add" data-add="1"><span class="ic">+</span><span class="lb">Add button</span></button>':'');
+  $('editBtn').textContent=editing?'Done editing':'Edit buttons';
+  $('stopBtn').style.display=run?'':'none';
+  $('now').textContent=run?(iconFor(timer.label)+(timer.label||'Working')):(editing?'Editing: tap a button to change it':'Press a button to start tracking');
+  if(!run)$('clk').textContent='';
+  $('names').innerHTML=presets.map(function(p){return '<option value="'+esc(p.name)+'">'}).join('');
+  renderEditor();
+}
+function renderEditor(){
+  var ed=$('editor');
+  if(!editing||sel===null){ed.style.display='none';ed.innerHTML='';return}
+  var d=draft;ed.style.display='';
+  ed.innerHTML='<div class="row"><input type="text" id="eName" value="'+esc(d.name)+'" placeholder="Button name"><input type="text" id="eIcon" value="'+esc(d.icon)+'" placeholder="Icon" style="flex:0 0 80px;font-size:20px;text-align:center"></div>'+
+   '<label class="sl" for="eCategory">Button category</label><div class="row"><select id="eCategory">'+CATS.map(function(c){return '<option'+(c===d.category?' selected':'')+'>'+c+'</option>'}).join('')+'</select></div>'+
+   (sel===-1?sugHtml():'')+'<p class="help">Choose an icon below, or paste any emoji or glyph into the Icon field.</p>'+
+   EMO.map(function(group){return '<div class="sl">'+group[0]+'</div><div class="emo">'+group[1].map(function(e){return '<button data-emo="'+e[0]+'" title="'+e[1]+'" aria-label="'+e[1]+'" aria-pressed="'+(e[0]===d.icon)+'" class="'+(e[0]===d.icon?'on':'')+'">'+e[0]+'</button>'}).join('')+'</div>'}).join('')+
+   '<div class="sw">'+PAL.map(function(c){return '<button data-col="'+c+'" class="'+(c===d.color?'on':'')+'" style="background:'+c+'"></button>'}).join('')+'</div>'+
+   '<div class="row"><button class="pri sm" id="eSave">Save</button><button class="sm" id="eCancel">Cancel</button>'+
+   (sel>=0?'<button class="sm" id="eL" aria-label="Move earlier in category"'+(neighbor(sel,-1)<0?' disabled':'')+'>&#9664;</button><button class="sm" id="eR" aria-label="Move later in category"'+(neighbor(sel,1)<0?' disabled':'')+'>&#9654;</button><button class="sm" id="eDel" style="color:var(--red)">Delete</button>':'')+'</div>';
+}
+function sugHtml(){
+  var h=SUG.map(function(x,i){return pFor(x[0])?'':'<button data-sug="'+i+'">'+x[1]+' '+esc(x[0])+'</button>'}).join('');
+  return h?'<div class="sl">Suggestions for IT support</div><div class="sug">'+h+'</div>':'';
+}
+function readDraft(){if($('eName')){draft.name=$('eName').value;draft.icon=$('eIcon').value;draft.category=$('eCategory').value}}
+
+$('deck').onclick=function(ev){
+  var t=ev.target.closest('.tile');if(!t)return;
+  if(t.getAttribute('data-add')){sel=-1;draft={name:'',icon:'⭐',color:PAL[presets.length%PAL.length],category:'Other'};renderDeck();return}
+  var i=+t.getAttribute('data-i');
+  if(editing){sel=i;draft=JSON.parse(JSON.stringify(presets[i]));draft.old=presets[i].name;renderDeck()}
+  else press(i);
+};
+$('editor').onclick=function(ev){
+  var t=ev.target.closest('button');if(!t)return;
+  readDraft();
+  var sg=t.getAttribute('data-sug');
+  if(sg!==null){draft.name=SUG[+sg][0];draft.icon=SUG[+sg][1];draft.category=defaultCategory(draft.name);renderEditor();return}
+  if(t.getAttribute('data-emo')){draft.icon=t.getAttribute('data-emo');renderEditor();return}
+  if(t.getAttribute('data-col')){draft.color=t.getAttribute('data-col');renderEditor();return}
+  if(t.id==='eCancel'){sel=null;renderDeck();return}
+  if(t.id==='eSave'){
+    var n=draft.name.trim();if(!n){$('eName').setCustomValidity('Enter a button name.');$('eName').reportValidity();return}
+    var p={name:n,icon:draft.icon.trim()||'⭐',color:draft.color,category:draft.category};
+    if(sel===-1)presets.push(p);
+    else{
+      var o=presets[sel].name;presets[sel]=p;
+      if(o!==n){entries.forEach(function(e){if(e.label===o)e.label=n});save(K,entries);if(timer&&timer.label===o){timer.label=n;save(TK,timer)}}
+    }
+    save(PK,presets);sel=null;renderDeck();render();return;
+  }
+  if(t.id==='eDel'){if(confirm('Delete this button? Past entries are kept.')){presets.splice(sel,1);save(PK,presets);sel=null;renderDeck();render()}return}
+  if(t.id==='eL'||t.id==='eR'){
+    var j=neighbor(sel,t.id==='eL'?-1:1);if(j<0)return;
+    var a=presets[sel];presets[sel]=presets[j];presets[j]=a;sel=j;save(PK,presets);renderDeck();return;
+  }
+};
+$('editor').oninput=function(ev){if(ev.target.id==='eName')ev.target.setCustomValidity('')};
+function closeRep(){$('report').hidden=true;document.body.style.overflow=''}
+$('repBtn').onclick=function(){$('report').hidden=false;document.body.style.overflow='hidden';render()};
+$('closeRep').onclick=closeRep;
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape')closeRep()});
+$('editBtn').onclick=function(){editing=!editing;sel=null;renderDeck()};
+$('stopBtn').onclick=function(){stopTimer();renderDeck();render();tick()};
+document.addEventListener('keydown',function(ev){
+  var tg=ev.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||editing||!$('report').hidden||ev.ctrlKey||ev.metaKey||ev.altKey)return;
+  var n=parseInt(ev.key,10);if(n>=1&&n<=9&&presets[n-1])press(n-1);
+});
+
+function tick(){
+  checkReminder();
+  if(timer){
+    var t=hms((Date.now()-timer.start)/1000);
+    $('clk').textContent=t;
+    var el=document.querySelector('.tile.on .el');if(el)el.textContent=t;
+    document.title=t+' · '+(timer.label||'Working');
+    if(++tk%15===0)render();
+  }else document.title='Time Deck';
+}
+
+/* ---- day views ---- */
+function render(){
+  if($('report').hidden)return;
+  $('day').value=cur;
+  var items=placed(cur),ds=dstart(cur),tracked=0,longest=0,sw=0,minS=1e15,maxT=0,g={},order=[];
+  items.forEach(function(it,i){
+    var s=(it.t-it.s)/1000;tracked+=s;if(s>longest)longest=s;
+    if(i&&items[i-1].label!==it.label)sw++;
+    minS=Math.min(minS,it.s);maxT=Math.max(maxT,it.t);
+    if(!g[it.label]){g[it.label]=0;order.push(it.label)}g[it.label]+=s;
+  });
+  $('stats').innerHTML='<div>Tracked<b>'+dur(tracked)+'</b></div>'+
+    '<div>Day span<b>'+(items.length?ct(minS)+' – '+ct(maxT):'—')+'</b></div>'+
+    '<div>Task switches<b>'+sw+'</b></div>'+
+    '<div>Longest block<b>'+(items.length?dur(longest):'—')+'</b></div>';
+  var lo=8,hi=17;
+  if(items.length){lo=Math.max(0,Math.floor((minS-ds)/36e5));hi=Math.min(24,Math.ceil((maxT-ds)/36e5));if(hi-lo<4)hi=Math.min(24,lo+4);if(hi-lo<4)lo=hi-4}
+  var span=hi-lo;
+  $('tl').innerHTML=items.map(function(it){
+    var l=((it.s-ds)/36e5-lo)/span*100,w=Math.max(.4,(it.t-it.s)/36e5/span*100);
+    return '<div class="blk'+(it.live?' live':'')+'" style="left:'+l+'%;width:'+w+'%;background:'+colorFor(it.label)+'" title="'+esc(it.label)+' · '+ct(it.s)+' – '+ct(it.t)+' ('+dur((it.t-it.s)/1000)+')">'+(w>6?esc(iconFor(it.label)+(w>14?it.label:'')):'')+'</div>';
+  }).join('');
+  var step=span>12?2:1,tx='';
+  for(var h=lo;h<=hi;h+=step)tx+='<span style="left:'+(h-lo)/span*100+'%">'+new Date(2000,0,1,h%24).toLocaleTimeString([],{hour:'numeric'}).replace(' ','').toLowerCase()+'</span>';
+  $('ticks').innerHTML=tx;
+  order.sort(function(a,b){return g[b]-g[a]});
+  $('by').innerHTML=order.length?order.map(function(l){
+    var p=tracked?g[l]/tracked*100:0;
+    return '<div class="bar"><span class="nm">'+esc(iconFor(l)+l)+'</span><span class="tr"><i style="width:'+p+'%;background:'+colorFor(l)+'"></i></span><span class="v">'+dur(g[l])+' · '+Math.round(p)+'%</span></div>';
+  }).join(''):'<div class="empty">Nothing tracked for this day yet.</div>';
+  $('rows').innerHTML=items.length?items.map(function(it){
+    return '<tr><td class="n" style="text-align:left">'+ct(it.s)+(it.live?' – now':' – '+ct(it.t))+'</td><td><span class="dot" style="background:'+colorFor(it.label)+'"></span>'+esc(iconFor(it.label)+it.label)+'</td><td class="n">'+dur((it.t-it.s)/1000)+'</td><td class="n">'+(it.e?'<button class="x" data-id="'+it.e.id+'" title="Delete">&times;</button>':'')+'</td></tr>';
+  }).join(''):'<tr><td class="empty">No entries for this day.</td></tr>';
+  var p=cur.split('-'),off=(new Date(+p[0],+p[1]-1,+p[2]).getDay()+6)%7,mon=shift(cur,-off),days=[],mx=3600;
+  for(var i=0;i<7;i++){var k=shift(mon,i),it2=placed(k),t=0;it2.forEach(function(x){t+=(x.t-x.s)/1000});mx=Math.max(mx,t);days.push({k:k,it:it2,t:t})}
+  $('wk').innerHTML=days.map(function(d){
+    return '<div class="bar wk'+(d.k===cur?' today':'')+'" data-day="'+d.k+'"><span class="nm">'+new Date(dstart(d.k)).toLocaleDateString([],{weekday:'short',day:'numeric'})+'</span><span class="tr">'+
+      d.it.map(function(x){return '<i title="'+esc(x.label)+' · '+dur((x.t-x.s)/1000)+'" style="width:'+(x.t-x.s)/1000/mx*100+'%;background:'+colorFor(x.label)+'"></i>'}).join('')+
+      '</span><span class="v">'+(d.t?dur(d.t):'—')+'</span></div>';
+  }).join('');
+}
+
+function parseDur(t){
+  t=t.trim().toLowerCase();var m;
+  if(m=t.match(/^(\d+):(\d{1,2})$/))return(+m[1])*3600+(+m[2])*60;
+  if(m=t.match(/^(\d*\.?\d+)\s*m(in(s|utes)?)?$/))return Math.round(+m[1]*60);
+  if(m=t.match(/^(\d*\.?\d+)\s*h?(rs?|ours?)?$/))return Math.round(+m[1]*3600);
+  return 0;
+}
+function parseTime(t){
+  var m=t.trim().toLowerCase().match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+  if(!m)return null;var h=+m[1],mi=+(m[2]||0);
+  if(m[3]==='pm'&&h<12)h+=12;if(m[3]==='am'&&h===12)h=0;
+  return h<24&&mi<60?h*60+mi:null;
+}
+$('addBtn').onclick=function(){
+  var s=parseDur($('mDur').value);
+  if(!s){$('err').textContent='Enter a length like 45m, 1:30 or 1.5';return}
+  var st=null,v=$('mStart').value.trim();
+  if(v){var mins=parseTime(v);if(mins===null){$('err').textContent='Start time looks off, try 9:30 am';return}st=dstart(cur)+mins*60000}
+  $('err').textContent='';
+  addEntry({date:cur,start:st,secs:s,label:$('mDesc').value.trim()||'(untitled)'});
+  $('mDesc').value=$('mStart').value=$('mDur').value='';render();
+};
+$('rows').onclick=function(ev){
+  var id=ev.target.getAttribute&&ev.target.getAttribute('data-id');
+  if(id&&confirm('Delete this entry?')){entries=entries.filter(function(e){return e.id!==id});save(K,entries);render()}
+};
+$('wk').onclick=function(ev){var r=ev.target.closest('.wk');if(r){cur=r.getAttribute('data-day');render()}};
+$('prev').onclick=function(){cur=shift(cur,-1);render()};
+$('next').onclick=function(){cur=shift(cur,1);render()};
+$('today').onclick=function(){cur=today();render()};
+$('day').onchange=function(){if(this.value){cur=this.value;render()}};
+$('copy').onclick=function(){
+  var q=function(t){return '"'+String(t).replace(/"/g,'""')+'"'};
+  var csv=['Date,Start,End,Label,Minutes'].concat(placed(cur).filter(function(x){return!x.live}).map(function(x){
+    return [cur,ct(x.s),ct(x.t),q(x.label),Math.round((x.t-x.s)/60000)].join(',');
+  })).join('\n'),b=$('copy');
+  function done(m){b.textContent=m;setTimeout(function(){b.textContent='Copy day as CSV'},1500)}
+  function fb(){var t=document.createElement('textarea');t.value=csv;document.body.appendChild(t);t.select();try{document.execCommand('copy');done('Copied!')}catch(e){done('Copy failed')}t.remove()}
+  try{navigator.clipboard.writeText(csv).then(function(){done('Copied!')},fb)}catch(e){fb()}
+};
+
+setInterval(tick,1000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden){notificationStatus();tick()}});
+window.addEventListener('focus',function(){notificationStatus();tick()});
+renderDeck();render();tick();
+})();
+</script>
+</body>
+</html>

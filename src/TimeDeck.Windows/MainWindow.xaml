@@ -1,0 +1,27 @@
+﻿<Window x:Class="TimeDeck.Windows.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TimeDeck.Windows"
+        mc:Ignorable="d"
+        Title="Time Deck" Width="1180" Height="820" MinWidth="800" MinHeight="480" WindowStartupLocation="CenterScreen">
+ <Grid Margin="28,22">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <DockPanel Margin="0,0,0,20">
+   <StackPanel DockPanel.Dock="Right" HorizontalAlignment="Right"><TextBlock Text="TODAY" Foreground="#6A7989" FontSize="11" HorizontalAlignment="Right"/><TextBlock x:Name="TodayTotal" FontSize="25" FontWeight="SemiBold"/></StackPanel>
+   <StackPanel><TextBlock Text="Time Deck" FontSize="27" FontWeight="SemiBold"/></StackPanel>
+  </DockPanel>
+  <Border x:Name="ReminderPanel" Grid.Row="1" Background="#E0F2EB" BorderBrush="#83BCA6" BorderThickness="1" CornerRadius="10" Padding="16" Margin="0,0,0,14" Visibility="Collapsed">
+   <StackPanel><TextBlock x:Name="ReminderText" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,10"/><WrapPanel><Button Content="Still working" Style="{StaticResource Primary}" Click="StillWorking_Click"/><Button Content="Change activity" Click="ChangeActivity_Click"/><Button Content="Stop tracking" Click="Stop_Click"/></WrapPanel></StackPanel>
+  </Border>
+  <Border Grid.Row="2" Background="#1B222C" CornerRadius="20" Padding="18">
+   <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+    <DockPanel Margin="6,0,6,18"><Button x:Name="StopButton" DockPanel.Dock="Right" Content="■  Stop" Background="#A9413C" Foreground="White" BorderBrush="#A9413C" Click="Stop_Click" VerticalAlignment="Center"/><TextBlock x:Name="Elapsed" DockPanel.Dock="Right" Foreground="White" FontSize="32" FontFamily="Consolas" Margin="16,0,22,0" VerticalAlignment="Center"/><StackPanel VerticalAlignment="Center"><TextBlock x:Name="ModeLabel" Text="READY TO TRACK" Foreground="#99AABF" FontSize="10" FontWeight="SemiBold"/><TextBlock x:Name="CurrentActivity" Text="Choose an activity" Foreground="White" FontSize="19" FontWeight="SemiBold" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/></StackPanel></DockPanel>
+    <Viewbox Grid.Row="1" Stretch="Uniform"><UniformGrid x:Name="Deck" Width="1040" Height="520" Columns="8" Rows="4"/></Viewbox>
+    <TextBlock x:Name="DeckHint" Grid.Row="2" Foreground="#99AABF" FontSize="12" Margin="6,12,0,0" Text="Click to start · Click again to stop · Choose another activity to switch"/>
+   </Grid>
+  </Border>
+  <DockPanel Grid.Row="3" Margin="2,14,2,0"><TextBlock Text="SAVED ON THIS PC" DockPanel.Dock="Right" FontSize="10" Foreground="#6A7989"/><TextBlock x:Name="WorkHours" Foreground="#6A7989" FontSize="12"/></DockPanel>
+ </Grid>
+</Window>

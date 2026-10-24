@@ -1,0 +1,4 @@
+# Normalise text files in Git; preserve binary assets exactly.
+* text=auto
+*.png binary
+*.ico binary
