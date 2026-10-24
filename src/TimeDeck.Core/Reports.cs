@@ -83,11 +83,11 @@ public static class Reports
             {
                 label = "'" + label;
             }
-            text.Append(start.ToString("yyyy-MM-dd"))
+            text.Append(start.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture))
                 .Append(',')
-                .Append(start.ToString("HH:mm:sszzz"))
+                .Append(start.ToString("HH:mm:sszzz", CultureInfo.InvariantCulture))
                 .Append(',')
-                .Append(end.ToString("HH:mm:sszzz"))
+                .Append(end.ToString("HH:mm:sszzz", CultureInfo.InvariantCulture))
                 .Append(",\"")
                 .Append(label.Replace("\"", "\"\""))
                 .Append("\",")

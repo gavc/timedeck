@@ -54,6 +54,7 @@ public sealed class StorageTests : IDisposable
     [InlineData("#2F7F6", false)]
     [InlineData("#2F7F6AA", false)]
     [InlineData("#GGGGGG", false)]
+    [InlineData("#AABBCC\n", false)]
     [InlineData("", false)]
     [InlineData(null, false)]
     public void Valid_color_format_is_enforced(string? color, bool expected)

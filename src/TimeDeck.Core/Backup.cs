@@ -54,6 +54,6 @@ public static partial class Backup
     private static bool ValidLabel(string? label) => !string.IsNullOrWhiteSpace(label) && label.Trim() == label && label.Length <= 80;
     public static bool IsValidColor(string? color) => color != null && HexColorRegex().IsMatch(color);
 
-    [GeneratedRegex("^#[a-fA-F0-9]{6}$")]
+    [GeneratedRegex("\\A#[a-fA-F0-9]{6}\\z")]
     private static partial Regex HexColorRegex();
 }

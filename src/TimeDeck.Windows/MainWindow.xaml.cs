@@ -20,6 +20,8 @@ public sealed partial class MainWindow : Window
     public MainWindow(App app)
     {
         this.app = app; InitializeComponent();
+        MinWidth = Math.Min(MinWidth, SystemParameters.WorkArea.Width - 24);
+        MinHeight = Math.Min(MinHeight, SystemParameters.WorkArea.Height - 24);
         Width = Math.Min(Width, SystemParameters.WorkArea.Width - 24);
         Height = Math.Min(Height, SystemParameters.WorkArea.Height - 24);
         Closing += OnClosing;

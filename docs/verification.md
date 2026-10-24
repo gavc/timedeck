@@ -1,5 +1,15 @@
 # Windows implementation verification
 
+## Version 1.0.1 quality pass — 24 October 2026
+
+- Reviewed native timer, storage, backup, report, UI and release code, including an independent read-only review.
+- Reproduced and fixed regional-settings-dependent CSV dates/times and acceptance of trailing newlines in hex colours. The three added regression cases failed before the fixes; all **41 tests pass** afterward.
+- Corrected deck/report minimum window bounds for smaller work areas. Builds and the existing desktop smoke checks pass; a physical small-screen/high-DPI matrix remains a manual check.
+- `dotnet build src/TimeDeck.Windows -c Release --no-restore`: **0 warnings, 0 errors**.
+- Published-app UI automation: **15 checks passed**, including report editing, persistence, notification acceptance, tray behaviour, second launch, timer recovery and exact cutoff.
+- `scripts/build-installer.ps1` builds the self-contained Windows x64 app and `artifacts/installer/TimeDeck-Setup-1.0.1-win-x64.exe`. Builds run locally; this repository does not currently have a GitHub Actions build workflow.
+- Installer signing and clean-machine/upgrade testing remain as described below. The original browser app is outside this native-app quality pass.
+
 23 October 2026. Windows x64, .NET SDK 10.0.204.
 
 ## Automated core checks

@@ -39,7 +39,7 @@ To build the installer, install Inno Setup 6.3 or later alongside the .NET 10 SD
 .\scripts\build-installer.ps1
 ```
 
-The script publishes the self-contained app and compiles [`installer/TimeDeck.iss`](installer/TimeDeck.iss). It reads the version from the Windows project; version 1.0.0 produces `artifacts/installer/TimeDeck-Setup-1.0.0-win-x64.exe`. If Inno Setup is installed in a custom location, pass `-CompilerPath 'C:\path\to\ISCC.exe'`.
+The script publishes the self-contained app and compiles [`installer/TimeDeck.iss`](installer/TimeDeck.iss). It reads the version from the Windows project; version 1.0.1 produces `artifacts/installer/TimeDeck-Setup-1.0.1-win-x64.exe`. If Inno Setup is installed in a custom location, pass `-CompilerPath 'C:\path\to\ISCC.exe'`.
 
 The installer uses the Time Deck icon and installs for the current user under `%LOCALAPPDATA%\Programs\TimeDeck`, without an administrator prompt. It adds a Start menu shortcut, offers an optional desktop shortcut, and registers an uninstaller in Windows Settings. Uninstalling keeps your tracking data and backups. The optional **Start with Windows** setting remains controlled by the app.
 

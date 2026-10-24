@@ -5,6 +5,22 @@ namespace TimeDeck.Tests;
 
 public sealed class ReportTests
 {
+    [Theory]
+    [InlineData("th-TH")]
+    [InlineData("fi-FI")]
+    public void Csv_dates_and_times_are_invariant_across_regional_settings(string culture)
+    {
+        var prior = System.Globalization.CultureInfo.CurrentCulture;
+        var row = new ReportRow(Guid.NewGuid(), null, "Work", At("09:00"), At("10:00"), false);
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = new(culture);
+            var csv = Reports.Csv([row], TimeZoneInfo.Utc);
+            Assert.Contains("2026-10-23,09:00:00+00:00,10:00:00+00:00,\"Work\",60", csv);
+        }
+        finally { System.Globalization.CultureInfo.CurrentCulture = prior; }
+    }
+
     [Fact]
     public void Editing_unchanged_fold_time_preserves_original_instant_and_fractional_seconds()
     {

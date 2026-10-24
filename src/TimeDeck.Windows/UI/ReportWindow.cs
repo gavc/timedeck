@@ -32,7 +32,7 @@ internal sealed class ReportWindow : Window
     }
     private ReportWindow(Window owner, App app)
     {
-        this.app = app; Owner = owner; Title = "Time Deck report"; Width = Math.Min(1130, SystemParameters.WorkArea.Width - 24); Height = Math.Min(900, SystemParameters.WorkArea.Height - 24); MinWidth = 800; MinHeight = 480; WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        this.app = app; Owner = owner; Title = "Time Deck report"; Width = Math.Min(1130, SystemParameters.WorkArea.Width - 24); Height = Math.Min(900, SystemParameters.WorkArea.Height - 24); MinWidth = Math.Min(800, SystemParameters.WorkArea.Width - 24); MinHeight = Math.Min(480, SystemParameters.WorkArea.Height - 24); WindowStartupLocation = WindowStartupLocation.CenterOwner;
         var body = new StackPanel { Margin = new(28) }; Content = new ScrollViewer { Content = body, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
         var heading = new DockPanel(); var close = Theme.Button("Back to deck", Close); DockPanel.SetDock(close, Dock.Right); heading.Children.Add(close); heading.Children.Add(Theme.Heading("Your time, clearly")); body.Children.Add(heading);
         body.Children.Add(Theme.Help("Review your day, spot long stretches and correct forgotten switches."));

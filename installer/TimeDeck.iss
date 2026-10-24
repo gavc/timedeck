@@ -1,7 +1,7 @@
 ; Build from the repository root with .\scripts\build-installer.ps1
 ; Inno Setup 6.3 or later is required for x64compatible.
 #ifndef AppVersion
-  #define AppVersion "1.0.0"
+  #define AppVersion "1.0.1"
 #endif
 #define AppName "Time Deck"
 #define AppExeName "TimeDeck.exe"
