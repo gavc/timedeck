@@ -41,7 +41,32 @@ To build the installer, install Inno Setup 6.3 or later alongside the .NET 10 SD
 
 The script publishes the self-contained app and compiles [`installer/TimeDeck.iss`](installer/TimeDeck.iss). It reads the version from the Windows project; version 1.0.1 produces `artifacts/installer/TimeDeck-Setup-1.0.1-win-x64.exe`. If Inno Setup is installed in a custom location, pass `-CompilerPath 'C:\path\to\ISCC.exe'`.
 
-The installer uses the Time Deck icon and installs for the current user under `%LOCALAPPDATA%\Programs\TimeDeck`, without an administrator prompt. It adds a Start menu shortcut, offers an optional desktop shortcut, and registers an uninstaller in Windows Settings. Uninstalling keeps your tracking data and backups. The optional **Start with Windows** setting remains controlled by the app.
+The installer offers two installation scopes:
+
+| Scope | Default location | Permissions and shortcuts |
+| --- | --- | --- |
+| Just me (default for a new installation) | `%LOCALAPPDATA%\Programs\TimeDeck` | No administrator rights needed; shortcuts and uninstall registration belong to the current user. |
+| All users | `%ProgramFiles%\TimeDeck` | Administrator approval required once to install; shortcuts and uninstall registration are available to all users. |
+
+Start the installer normally, **not** with **Run as administrator** or from an administrator shell. Select **All users** when IT needs to supply administrator credentials. Running a per-user installation as another administrator installs it into that administrator's profile, not yours. Workplace policies may still require IT approval even for per-user installs.
+
+Both scopes add a Start menu shortcut and offer an optional desktop shortcut. The installed app runs as a normal user in either scope. An all-users installation does not launch the app at the end of setup: each user opens it from their own Start menu. Data, backups, settings, notifications and the optional **Start with Windows** setting remain per Windows user; no tracking data is shared or written into Program Files. There are no centrally managed settings in this installer.
+
+Updates normally reuse the existing installation scope and location. To deliberately change scope, export a backup, exit the app, disable **Start with Windows** in the old copy, and uninstall it before installing with the new scope. Uninstalling keeps data and backups, so the same Windows account retains its data. Data created under a different administrator account is not migrated automatically; use backup export/restore if it needs to be transferred. Avoid keeping both per-user and all-users copies: their shortcuts can conflict and only one app instance per user can run.
+
+### Silent deployment
+
+IT can select the scope explicitly, including when deploying as SYSTEM:
+
+```powershell
+# Machine-wide install, from an elevated deployment process:
+.\TimeDeck-Setup-1.0.1-win-x64.exe /ALLUSERS /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP- /LOG="C:\Windows\Temp\TimeDeck-install.log"
+
+# Per-user install, run as the intended user (not as SYSTEM/another administrator):
+.\TimeDeck-Setup-1.0.1-win-x64.exe /CURRENTUSER /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+```
+
+Use `/ALLUSERS` or `/CURRENTUSER` explicitly for unattended deployments rather than relying on remembered scope. Silent setup never launches the app. Capture the setup process exit code and log in your deployment tool. For silent removal, run `unins000.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART` from the installation directory, elevated for an all-users install. Machine-wide uninstall leaves each user's optional sign-in entry untouched; disable **Start with Windows** in each user's app before removal to avoid stale entries. Per-user uninstall removes a matching sign-in entry.
 
 Before installing an update or uninstalling, choose **Exit** from the Time Deck tray menu so the timer is stopped and saved. Closing its window only hides it in the tray. Build output stays under the ignored `artifacts/` directory; the installer can be attached to a GitHub release separately. Locally built installers are unsigned.
 

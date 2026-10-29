@@ -1,5 +1,26 @@
 # Windows implementation verification
 
+## Dual-scope installer acceptance checks
+
+Local checks — 29 October 2026:
+
+- `scripts/build-installer.ps1` successfully published the app and compiled the dual-scope installer with Inno Setup.
+- Windows UI Automation verified that a fresh interactive setup offers **Install for all users** and **Install for me only**.
+- Windows UI Automation verified that `/CURRENTUSER` skips the scope prompt and defaults to the current user's `%LOCALAPPDATA%\Programs\TimeDeck` directory.
+- Both wizard checks stopped before installation; no installed copy or running app was changed.
+
+The installer now uses Inno Setup's installation-mode choice and automatic path/shortcut constants. Application data, settings, notifications and sign-in startup remain per user; the application continues to request `asInvoker` execution. Run the following installation checks on a disposable Windows VM, not a workstation with an existing Time Deck install:
+
+- As a standard user, start setup normally and select **Just me**. Verify there is no UAC prompt, the default path is `%LOCALAPPDATA%\Programs\TimeDeck`, shortcuts/uninstall registration are user-specific, and optional post-install launch runs as that user.
+- As a standard user, select **All users**, supply a different administrator's credentials at UAC, and verify installation goes to `%ProgramFiles%\TimeDeck`, shortcuts/uninstall registration are machine-wide, and there is no post-install launch option.
+- Sign in as two different standard users after the all-users install. Launch from each Start menu without elevation; verify independent `%LOCALAPPDATA%\TimeDeck\state.json` files, settings, notification registration and optional sign-in startup. Confirm neither user needs write permission to the installation directory.
+- Exercise `/CURRENTUSER` as the intended standard user and `/ALLUSERS` from an elevated deployment account or SYSTEM, with `/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-`. Check setup exit codes/logs, correct registration scope, and that no app process starts.
+- Update an existing per-user install and an existing all-users install. Verify setup retains each scope/path, offers no unintended scope switch, and preserves tracking data.
+- Change scope using the documented uninstall/reinstall procedure, including disabling sign-in startup first. Verify the same user's existing data is retained. A different administrator's data must not be copied automatically.
+- Uninstall each scope. Verify app files and matching shortcuts/registration are removed while user data/backups remain. Per-user uninstall removes only a matching startup command; all-users uninstall must not change the deploying administrator's HKCU startup command.
+
+These are acceptance checks, not a claim that the cross-account/UAC/SYSTEM matrix has been executed locally.
+
 ## Version 1.0.1 quality pass — 24 October 2026
 
 - Reviewed native timer, storage, backup, report, UI and release code, including an independent read-only review.

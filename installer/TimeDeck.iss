@@ -16,10 +16,12 @@ AppPublisher=gavc
 AppPublisherURL=https://github.com/gavc/timedeck
 AppSupportURL=https://github.com/gavc/timedeck/issues
 AppUpdatesURL=https://github.com/gavc/timedeck/releases
-DefaultDirName={localappdata}\Programs\TimeDeck
+DefaultDirName={autopf}\TimeDeck
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=dialog
+UsePreviousPrivileges=yes
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0.19041
@@ -47,16 +49,17 @@ Name: "{autoprograms}\{#AppName}"; Filename: "{app}\{#AppExeName}"; WorkingDir: 
 Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExeName}"; WorkingDir: "{app}"; IconFilename: "{app}\{#AppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+; Machine deployments must not start a user session under the installing account.
+Filename: "{app}\{#AppExeName}"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent runasoriginaluser; Check: not IsAdminInstallMode
 
 ; Deliberately leave %LOCALAPPDATA%\TimeDeck and user backups untouched.
-; Remove the app's optional sign-in entry only if it points at this install.
+; Only per-user uninstall can safely clean the matching user's sign-in entry.
 [Code]
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 var
   StartupCommand: String;
 begin
-  if CurUninstallStep = usUninstall then
+  if (CurUninstallStep = usUninstall) and (not IsAdminInstallMode) then
     if RegQueryStringValue(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Run',
       'TimeDeck', StartupCommand) then
       if CompareText(StartupCommand, '"' + ExpandConstant('{app}\{#AppExeName}') + '" --tray') = 0 then
